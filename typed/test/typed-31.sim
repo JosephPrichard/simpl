@@ -1,0 +1,4 @@
+bool ret;
+bool e;
+ret := true;
+e := ret

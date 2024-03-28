@@ -1,0 +1,8 @@
+// This SIMPL program adds two numbers.
+// A SIMPL program always receives its input in variable
+// 'arg0' and it must return its output in variable 'ret'.
+
+if (arg0 <= 1) then
+    ret := 0
+else
+    ret := 2 + arg0

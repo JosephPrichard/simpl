@@ -1,0 +1,5 @@
+bool a;
+bool ret;
+a := true;
+a := !a;
+ret := a

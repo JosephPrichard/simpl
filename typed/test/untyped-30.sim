@@ -1,0 +1,6 @@
+bool n;
+n := false;
+if (n <= 3) then
+    n := 1
+else
+    n := 1

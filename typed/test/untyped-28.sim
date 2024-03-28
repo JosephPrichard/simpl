@@ -1,0 +1,6 @@
+int n;
+n := 1;
+if (n) then
+    n := true
+else
+    n := true

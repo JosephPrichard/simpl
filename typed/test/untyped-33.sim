@@ -1,0 +1,6 @@
+int a;
+bool b;
+bool ret;
+a := 1;
+b := true;
+ret := 1 && b

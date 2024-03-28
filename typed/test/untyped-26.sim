@@ -1,0 +1,8 @@
+bool ret;
+bool e;
+e := false;
+if (e) then
+    ret := true
+else
+    ret := false;
+e := ret

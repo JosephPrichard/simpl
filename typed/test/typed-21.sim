@@ -1,0 +1,1 @@
+int ret; ret := 3; skip

@@ -1,0 +1,9 @@
+int a;
+int b;
+int c;
+int ret;
+a := 1;
+b := 2;
+c := a + b;
+arg0 := arg0 + c;
+ret := arg0

@@ -1,0 +1,7 @@
+int a;
+int b;
+int ret;
+a := 1;
+b := 2;
+a := a * b + arg0;
+ret := a

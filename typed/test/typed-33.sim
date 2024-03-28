@@ -1,0 +1,12 @@
+int a;
+int b;
+bool c;
+int ret;
+a := 2;
+b := 3;
+c := a <= b;
+ret := a * b * 4 * 5;
+if (c && true || false) then
+  ret := ret + 1
+else
+  ret := 1 - ret

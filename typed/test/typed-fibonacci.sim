@@ -1,0 +1,14 @@
+int ret;
+int a;
+int b;
+ret := 1;
+a := 0;
+b := 1;
+while !(arg0 <= 0) do (
+  int tmp;
+  arg0 := arg0 - 1;
+  tmp := a;
+  a := b;
+  b := tmp + b;
+  ret := a
+)

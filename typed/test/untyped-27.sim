@@ -1,0 +1,9 @@
+int b;
+int ret;
+b := 1;
+while (b <= 2) do (
+    b := b + 1;
+    int c;
+    c := 1
+);
+ret := c
