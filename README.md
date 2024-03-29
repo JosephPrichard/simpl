@@ -40,15 +40,13 @@ if (arg0 <= 1) then (ret := 0) else (ret := 1); x := 2; while ((!(ret <= 0)) && 
 <if (arg0 <= 1) then (ret := 0) else (ret := 1), σ0> ⇓ σ0[ret->0]  <x := 2; while ((!(ret <= 0)) && ((2 * x) <= arg0)) do (y := x; while ((!(ret <= 0)) && (y <= arg0)) do (if (arg0 <= y) then (ret := 0) else (y := (y + x))); x := (x + 1)), σ1> ⇓ σ1[x->2]
 
 <if (arg0 <= 1) then (ret := 0) else (ret := 1); x := 2; while ((!(ret <= 0)) && ((2 * x) <= arg0)) do (y := x; while ((!(ret <= 0)) && (y <= arg0)) do (if (arg0 <= y) then (ret := 0) else (y := (y + x))); x := (x + 1)), σ0> ⇓ σ1[x->2]
-
-Ret: 0
 ```
 
 ## Typed Simpl
 
 A typechecked dialect of Simpl with support for both integers and booleans.
 
-The following is the example of a fibonacci finding algorithm in typed simpl:
+The following is an example of a fibonacci finding algorithm in typed Simpl:
 
 ```
 int ret;
