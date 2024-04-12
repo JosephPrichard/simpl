@@ -1,0 +1,14 @@
+int ret;
+ret := 0;
+
+fun(int * int * (fun(int->int)) -> int) count;
+
+count := fun(int x, int until, fun(int->int) next) {
+    while (x <= until) do (
+       x := next(x)
+    );
+    int ret;
+    ret := x
+};
+
+ret := count(1, arg0, fun(int x) { int ret; ret := x * 2 })

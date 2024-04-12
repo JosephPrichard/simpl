@@ -64,3 +64,27 @@ while !(arg0 <= 0) do (
   ret := a
 )
 ```
+
+## Functional Simpl
+
+A functional dialect of Simpl with support for functional abstraction and application.
+
+The following is an example of a program to count to a threshold using a functional abstraction to determine the next counter in the loop.
+We set the return value of the function by assigning to the "ret" variable. Variable "ret" must be declared in the function body for a function to be valid.
+
+```
+int ret;
+ret := 0;
+
+fun(int * int * (fun(int->int)) -> int) count;
+
+count := fun(int x, int until, fun(int->int) next) {
+    while (x <= until) do (
+       x := next(x)
+    );
+    int ret;
+    ret := x
+};
+
+ret := count(1, arg0, fun(int x) { int ret; ret := x * 2 })
+```
