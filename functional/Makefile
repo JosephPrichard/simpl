@@ -1,14 +1,4 @@
-TESTS = $(wildcard test/*.sim)
-
-all: build
-
-test: $(TESTS)
-
-$(TESTS): build
-	@echo "Running test $@"
-	@./simpl.exe $@ 10
-
-build:
+all:
 	ocamlc -c simpltypes.ml
 	ocamlyacc simplparser.mly
 	ocamlc -c simplparser.mli
@@ -17,6 +7,9 @@ build:
 	ocamlc -c simpllexer.ml
 	ocamlc -c simpl.ml
 	ocamlc -o simpl.exe simpltypes.cmo simpllexer.cmo simplparser.cmo simpl.cmo
-
 clean:
-	rm -f simpl.exe simpllexer.ml simplparser.ml simplparser.mli *.cmo *.cmi
+	rm -rf *.exe
+	rm -rf *.cmo
+	rm -rf *.cmi
+	rm simpllexer.ml
+	rm simplparser.ml

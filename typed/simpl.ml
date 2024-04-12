@@ -29,7 +29,6 @@ let init_typctx (l : (varname * vartyp) list) : typctx =
   let rec aux l (acc : typctx) = 
     match l with
     | (v, vtyp) :: l ->
-      (* Printf.printf "Declare %s of type %s\n" v (string_of_vartyp vtyp); *)
       aux l (update acc v vtyp)
     | [] -> acc
   in
@@ -51,8 +50,7 @@ let rec typchk_expr (tc : typctx) (e : iexpr) : exprtyp =
   | Var (v, li) ->
     (match tc v with
     | Undeclared -> ETypErr (error (Printf.sprintf "variable '%s' is undeclared" v) li)
-    | VTyp (ityp, init) as vtyp ->
-      (* Printf.printf "Access %s of type %s\n" v (string_of_vartyp vtyp); *)
+    | VTyp (ityp, init) ->
       if init then
         ExpTyp ityp
       else
@@ -110,7 +108,6 @@ let rec typchk_cmd (tc : typctx) (c : icmd) : cmdtyp =
     (match tc v with
     | Undeclared -> CTypErr (error (Printf.sprintf "assign to an undeclared variable '%s'" v) li)
     | VTyp (ityp, _) as vtyp ->
-      (* Printf.printf "Assign %s of type %s\n" v (string_of_vartyp vtyp); *)
       (match (ityp, typchk_expr tc e) with
       | (TypBool, ExpTyp TypBool)
       | (TypInt, ExpTyp TypInt) -> TypCtx (update tc v (VTyp (ityp, true)))
@@ -133,7 +130,6 @@ let rec typchk_cmd (tc : typctx) (c : icmd) : cmdtyp =
     (match tc v with
     | Undeclared ->
       let vtyp = VTyp (ityp, false) in
-      (* Printf.printf "Declare %s of type %s\n" v (string_of_vartyp vtyp); *)
       TypCtx (update tc v vtyp)
     | _ ->  CTypErr (error (Printf.sprintf "redeclaring variable '%s'" v) li))
 
