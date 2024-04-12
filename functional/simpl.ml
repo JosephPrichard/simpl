@@ -1,3 +1,7 @@
+(* Joseph Hesketh Prichard *)
+(* JEH190000 *)
+(* 4/11/2024 *)
+
 open Simpltypes
 
 type vartyp =
@@ -6,7 +10,7 @@ type vartyp =
 
 type typctx = varname -> vartyp
 
-(* These are actually a special name-aliased version of the result type, I will convert to result when needed... *)
+(* These are actually a special name-aliased versions of the result type, I will convert to result when needed... *)
 type cmdtyp =
   | TypCtx of typctx
   | CTypErr of string
@@ -22,21 +26,28 @@ let init_typctx (l : (varname * vartyp) list) : typctx =
   try List.assoc x l with
   | Not_found -> Undeclared
 
-let rec string_of_ityp_list l = 
-  List.fold_left
-    (fun acc typ ->
-      Printf.sprintf 
-        "%s->%s" 
+let rec string_of_itypl acc l =
+  match l with
+  | [typ] ->
+    (Printf.sprintf 
+      "%s%s" 
+      acc 
+      (string_of_ityp typ))
+  | typ :: l ->
+    string_of_itypl
+      (Printf.sprintf 
+        "%s%s->" 
         acc 
         (string_of_ityp typ))
-    "" l
+      l
+  | [] -> acc
 
 and string_of_ityp = function
   | TypInt -> "Int"
   | TypBool -> "Bool"
   | TypFunc (args, ret) -> 
-    Printf.sprintf "fun(%s)%s" 
-      (string_of_ityp_list args)
+    Printf.sprintf "fun(%s->%s)" 
+      (string_of_itypl "" args)
       (string_of_ityp ret)
 
 let rec string_of_vartyp = function 
@@ -82,23 +93,34 @@ let rec typchk_expr (tc : typctx) (e : iexpr) : exprtyp =
     | ExpTyp TypBool -> ExpTyp TypBool
     | ExpTyp TypInt -> unop_error "!" "bool" li
     | e -> e)
-  | Abstraction (params, body, li) ->
-    let params_typ = 
-      List.map (fun (vn, ityp, _) -> ityp) params 
+  | Abstraction (args, body, li) ->
+    let args_typ = 
+      List.map (fun (vn, ityp, _) -> ityp) args 
     in
-    (match typchk_cmd tc body with
+    let args_tc = 
+      List.fold_left 
+        (* Parameters are always typed and initialized *)
+        (fun tc (vn, ityp, _) -> update tc vn (VTyp (ityp, true)))
+        tc args
+    in
+    (match typchk_cmd args_tc body with
     | TypCtx tc -> 
       (match tc "ret" with
-      | VTyp (ret_typ, true) -> ExpTyp (TypFunc (params_typ, ret_typ))
+      | VTyp (ret_typ, true) -> ExpTyp (TypFunc (args_typ, ret_typ))
       | VTyp (ret_typ, false) ->
-        ETypErr (error "ret variable is declared in function but never initialized" li)
+        let _ = print_endline "warn: ret variable is declared in function but never initialized" in
+        ExpTyp (TypFunc (args_typ, ret_typ))
       | Undeclared -> 
         ETypErr (error "cannot check type: ret variable is undeclared in the function" li))
     | CTypErr e -> ETypErr e)
   | Apply (func, args, li) ->
     (match typchk_expr tc func with
     | ExpTyp (TypFunc (params_typ, ret_typ)) ->
-      typchk_arg_params (typchk_arg_list tc args) params_typ ret_typ li
+      typchk_arg_params 
+        (typchk_arg_list tc args) 
+        params_typ 
+        ret_typ 
+        li
     | ExpTyp ityp ->
       let m = Printf.sprintf "lhs of an application must be a function, got %s" (string_of_ityp ityp) in
       ETypErr (error m li)
@@ -123,8 +145,8 @@ and typchk_arg_params args_result params_typ ret_typ li =
       let m = 
         Printf.sprintf 
           "arguments and parameters differ, argument types: %s, parameter types: %s" 
-          (string_of_ityp_list args_typ) 
-          (string_of_ityp_list params_typ) 
+          (string_of_itypl "" args_typ) 
+          (string_of_itypl "" params_typ) 
       in
       ETypErr (error m li)
   | Error e -> ETypErr e
@@ -179,30 +201,41 @@ and typchk_cmd (tc : typctx) (c : icmd) : cmdtyp =
     (match tc v with
     | Undeclared -> CTypErr (error (Printf.sprintf "assign to an undeclared variable '%s'" v) li)
     | VTyp (ityp, _) as vtyp ->
-      (match (ityp, typchk_expr tc e) with
+      let assign_typ = typchk_expr tc e in
+      (match (ityp, assign_typ) with
       | (TypBool, ExpTyp TypBool)
       | (TypInt, ExpTyp TypInt) -> TypCtx (update tc v (VTyp (ityp, true)))
+      | (TypFunc lhs_typ, ExpTyp TypFunc rhs_typ) -> 
+        if lhs_typ = rhs_typ then
+          TypCtx (update tc v (VTyp (ityp, true)))
+        else
+          let m = (Printf.sprintf "assignment must be same function type signature as declaration %s" (string_of_vartyp vtyp)) in
+          CTypErr (error m li)
       | (_, ETypErr e) -> CTypErr e
-      | _ ->  CTypErr (error (Printf.sprintf "assignment must be same type as declaration %s" (string_of_vartyp vtyp)) li)))
+      | _ -> 
+        let m = (Printf.sprintf "assignment must be same type as declaration %s" (string_of_vartyp vtyp)) in
+        CTypErr (error m li)))
   | Cond (e, c1, c2, li) ->
     typchk_bool_expr tc e li (fun _ -> 
       (* Both c1 and c2 must be well-typed, but we cannot use their type-contexts *)
       (match (typchk_cmd tc c1, typchk_cmd tc c2) with
       | (CTypErr _ as e, _) -> e
       | (TypCtx _, (CTypErr _ as e)) -> e
-      | _ -> TypCtx tc))
+      | (TypCtx _, TypCtx _) -> TypCtx tc))
   | While (e, c1, li) -> 
     typchk_bool_expr tc e li (fun _ -> 
-      (* Both c1 well-typed, but we cannot use it's type-contexts *)
+      (* c1 is well-typed, but we cannot use it's type-contexts *)
       (match (typchk_cmd tc c1) with
       | (CTypErr _ as e) -> e
-      | _ -> TypCtx tc))
-  | Decl (ityp, v, li) -> 
-    (match tc v with
+      | TypCtx _ -> TypCtx tc))
+  | Decl (ityp, v, li) ->
+    let vtyp = VTyp (ityp, false) in
+    TypCtx (update tc v vtyp)
+    (* (match tc v with
     | Undeclared ->
       let vtyp = VTyp (ityp, false) in
       TypCtx (update tc v vtyp)
-    | _ ->  CTypErr (error (Printf.sprintf "redeclaring variable '%s'" v) li))
+    | VTyp _ ->  CTypErr (error (Printf.sprintf "redeclaring variable '%s'" v) li)) *)
 
 (* I've added an error message to our segmentation fault error so we don't make the same mistakes C and C++ do! *)
 exception SegFault of string
@@ -251,16 +284,25 @@ and eval_code s varnames arg_exprs func_body li =
   let rec join_args varnames arg_vals acc =
     match (varnames, arg_vals) with
     | ([], []) -> acc
-    | (h1 :: varnames, h2 :: arg_Vals) -> join_args varnames arg_vals ((h1, h2) :: acc)
-    | (varnames, []) ->
-      let m = Printf.sprintf "function application needs %d more arguments" (List.length varnames) in
+    | (vn :: varnames, av :: arg_vals) -> 
+      join_args varnames arg_vals ((vn, av) :: acc)
+    | (vn :: varnames, []) ->
+      let m = Printf.sprintf "function application needs %d more arguments" ((List.length varnames) + 1) in
       raise (SegFault (error m li))
     | ([], arg_vals) ->
       let m = (Printf.sprintf "function application given %d more arguments than needed" (List.length arg_vals)) in
       raise (SegFault (error m li))
   in
-  let arg_pairs = join_args varnames (List.map (fun e -> eval_expr s e) arg_exprs) [] in
-  let s_args = List.fold_left (fun s (vn, hv) -> update s vn hv) s arg_pairs in
+  let arg_pairs = 
+    List.rev 
+      (join_args 
+        varnames 
+        (List.map (fun e -> eval_expr s e) arg_exprs) 
+        [])
+  in
+  let s_args = 
+    List.fold_left (fun s (vn, hv) -> update s vn hv) s arg_pairs 
+  in
   (exec_cmd s_args func_body) "ret"
 
 and exec_cmd (s : store) (c : icmd) : store =
@@ -285,15 +327,15 @@ let main () =
   let path, args =
     match Array.to_list Sys.argv with
     | _ :: path :: argv -> (path, argv)
-    | argv -> raise (Invalid_argument "Usage: <exe> ./program/path <arg1> <arg2>")
+    | argv -> raise (Invalid_argument "Usage: <exe> ./path/to/program <arg1> <arg2> ... <argn>")
   in
   let c = Simplparser.parse_cmd Simpllexer.token (Lexing.from_channel (open_in path)) in
 
   let s_pairs = 
     List.mapi
       (fun i a ->
-        let arg = "arg" ^ string_of_int (i - 2) in
-        let data = Data (if i >= 2 then argval a else 0) in
+        let arg = "arg" ^ string_of_int i in
+        let data = Data (argval a) in
         (arg, data))
       args
   in
@@ -302,7 +344,7 @@ let main () =
   let typ_pairs = 
     List.mapi
       (fun i a ->
-        let arg = "arg" ^ string_of_int (i - 2) in
+        let arg = "arg" ^ string_of_int i in
         let vtyp = VTyp (argtyp a, true) in
         (arg, vtyp))  
       args
