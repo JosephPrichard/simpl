@@ -1,0 +1,23 @@
+fun(int -> fun(int -> fun(int -> int))) count;
+
+count := fun(int from) {
+    fun(int -> fun(int -> int)) f1;
+    f1 := fun(int until) {
+        fun(int -> int) f2;
+        f2 := fun(int next) {
+            while (from <= until) do (
+                from := from * next
+            );
+            int ret;
+            ret := from
+        };
+        fun(int -> int) ret;
+        ret := f2
+    };
+    fun(int -> fun(int -> int)) ret;
+    ret := f1
+};
+
+int ret;
+ret := 0;
+ret := ((count(1))(arg0))(2)

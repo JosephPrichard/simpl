@@ -229,13 +229,11 @@ and typchk_cmd (tc : typctx) (c : icmd) : cmdtyp =
       | (CTypErr _ as e) -> e
       | TypCtx _ -> TypCtx tc))
   | Decl (ityp, v, li) ->
-    let vtyp = VTyp (ityp, false) in
-    TypCtx (update tc v vtyp)
-    (* (match tc v with
+    (match tc v with
     | Undeclared ->
       let vtyp = VTyp (ityp, false) in
       TypCtx (update tc v vtyp)
-    | VTyp _ ->  CTypErr (error (Printf.sprintf "redeclaring variable '%s'" v) li)) *)
+    | VTyp _ ->  CTypErr (error (Printf.sprintf "redeclaring variable '%s'" v) li))
 
 (* I've added an error message to our segmentation fault error so we don't make the same mistakes C and C++ do! *)
 exception SegFault of string
@@ -246,7 +244,11 @@ type heapval =
 
 type store = varname -> heapval
 
-let init_store (l : (varname * heapval) list) : store = fun x -> List.assoc x l
+let init_store (l : (varname * heapval) list) : store = 
+  fun x -> 
+    match List.assoc_opt x l with
+    | Some v -> v
+    | None -> raise (SegFault (Printf.sprintf "cannot find variable '%s' in the store" x))
 
 let rec eval_expr (s : store) (e : iexpr) : heapval =
   let eval_intop f (e1, e2, li) =

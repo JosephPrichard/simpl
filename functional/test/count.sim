@@ -1,6 +1,3 @@
-int ret;
-ret := 0;
-
 fun(int * int * (fun(int->int)) -> int) count;
 
 count := fun(int x, int until, fun(int->int) next) {
@@ -11,4 +8,8 @@ count := fun(int x, int until, fun(int->int) next) {
     ret := x
 };
 
-ret := count(1, arg0, fun(int x) { int ret; ret := x * 2 })
+fun(int -> int) f;
+f := fun(int x) { int ret; ret := x * 2 };
+
+int ret;
+ret := count(1, arg0, f)
