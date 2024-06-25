@@ -1,6 +1,6 @@
 # Simpl
 
-Simpl is a simple imperative language designed for teaching programming languages theory. This project implements Simpl as both an untyped dialect with only ints and a typed dialect allowing for both bools and ints. These assignments were done at UTD under Professor Kevin Hamlen.
+Simpl is a simple imperative language designed for teaching programming languages theory. This project implements Simpl as both an untyped dialect with only ints and a typed dialect allowing for both bools and ints. These assignments were done at UTD under [Professor Kevin Hamlen](https://personal.utdallas.edu/~hamlen/).
 
 ## Untyped Simpl
 
